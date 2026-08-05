@@ -8,7 +8,6 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  // Removed 'runtime: "nodejs"' - Next.js handles this automatically for API routes
   providers: [
     Credentials({
       async authorize(credentials) {
@@ -43,7 +42,10 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
     async jwt({ token, user }) {
       if (user) {
         token.role = user.role;
-        token.id = user.id;
+        // Fix: Ensure id is defined before assigning
+        if (user.id) {
+          token.id = user.id;
+        }
       }
       return token;
     },
