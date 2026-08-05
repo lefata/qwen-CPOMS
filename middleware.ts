@@ -1,5 +1,5 @@
-import { auth } from '@/lib/auth';
-import { NextResponse } from 'next/server';
+import { auth } from "@/lib/auth";
+import { NextResponse } from "next/server";
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
@@ -10,15 +10,17 @@ export default auth((req) => {
   if (isOnDashboard && !isLoggedIn) {
     return NextResponse.redirect(new URL('/login', req.url));
   }
-  
+
   if (isOnLogin && isLoggedIn) {
     return NextResponse.redirect(new URL('/dashboard', req.url));
   }
 
-  // RBAC Logic (Example: Only Admins can access /admin)
-  if (req.nextUrl.pathname.startsWith('/admin')) {
-    if (!isLoggedIn || req.auth?.user?.role !== 'SUPER_ADMIN') {
-      return NextResponse.redirect(new URL('/dashboard', req.url));
+  // Role Based Access Control (RBAC) Example
+  if (isLoggedIn && isOnDashboard) {
+    const userRole = (req.auth.user as any)?.role;
+    // Example: Only admins can access specific settings
+    if (req.nextUrl.pathname.startsWith('/dashboard/admin') && userRole !== 'super_admin') {
+       return NextResponse.redirect(new URL('/dashboard', req.url));
     }
   }
 
@@ -26,5 +28,5 @@ export default auth((req) => {
 });
 
 export const config = {
-  matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
+  matcher: ['/dashboard/:path*', '/login'],
 };
