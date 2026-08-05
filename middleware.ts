@@ -1,8 +1,8 @@
+// FORCE NODE.JS RUNTIME - This must be the first export
+export const runtime = 'nodejs';
+
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
-
-// Force Node.js runtime to support bcrypt and DB imports
-export const runtime = 'nodejs'; 
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
