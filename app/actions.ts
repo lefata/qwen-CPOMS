@@ -7,6 +7,7 @@ import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
+import { students } from '@/lib/db/schema'; // Ensure students is imported
 
 // Schema for creating an incident
 const createIncidentSchema = z.object({
@@ -59,4 +60,40 @@ async function logAction(action: string, entityId: string) {
     ipAddress: headersList.get('x-forwarded-for') || 'unknown',
     userAgent: headersList.get('user-agent') || 'unknown',
   });
+}
+export async function getDashboardData() {
+  const session = await auth();
+  if (!session?.user) throw new Error('Unauthorized');
+
+  await logAction('VIEW_DASHBOARD', 'dashboard_main');
+
+  // Fetch incidents with student data joined
+  const allIncidents = await db.select({
+    id: incidents.id,
+    title: incidents.title,
+    severity: incidents.severity,
+    status: incidents.status,
+    createdAt: incidents.createdAt,
+    studentName: students.firstName, // Get student name
+    studentId: students.id,
+  })
+  .from(incidents)
+  .leftJoin(students, eq(incidents.studentId, students.id))
+  .orderBy(desc(incidents.createdAt))
+  .limit(50); // Limit for performance
+
+  // Transform data to ensure compatibility with UI expecting 'studentName'
+  const incidentsWithNames = allIncidents.map(inc => ({
+    ...inc,
+    studentName: inc.studentName || 'Unknown Student', // Fallback
+  }));
+
+  return {
+    incidents: incidentsWithNames,
+    stats: {
+      total: incidentsWithNames.length,
+      open: incidentsWithNames.filter(i => i.status === 'open').length,
+      critical: incidentsWithNames.filter(i => i.severity === 'critical').length,
+    },
+  };
 }
