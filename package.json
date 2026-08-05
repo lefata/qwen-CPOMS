@@ -1,4 +1,12 @@
 {
+  "scripts": {
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start",
+    "db:push": "drizzle-kit push"
+  },
+  
+{
   "name": "cpoms-platform",
   "version": "0.1.0",
   "private": true,
