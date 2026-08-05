@@ -4,6 +4,23 @@ import { useState } from "react";
 import { signIn } from "next-auth/react";
 import { useRouter } from "next/navigation";
 import { ShieldCheck } from "lucide-react";
+import { auth } from "@/lib/auth";
+import { redirect } from "next/navigation";
+import LoginForm from "@/components/login-form"; // Assuming you have this component
+
+export default async function LoginPage() {
+  const session = await auth();
+  
+  if (session) {
+    redirect("/dashboard");
+  }
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-slate-100">
+      <LoginForm />
+    </div>
+  );
+}
 
 export default function LoginPage() {
   const [email, setEmail] = useState("");
