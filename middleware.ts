@@ -19,7 +19,9 @@ export default auth((req) => {
 
   // Role Based Access Control (Optional refinement)
   if (isLoggedIn && isOnDashboard) {
-    const role = req.auth.user?.role;
+    // Fix: Add null check for req.auth
+    const role = req.auth?.user?.role;
+    
     // Example: Prevent 'staff' from accessing specific admin routes if needed
     // if (req.nextUrl.pathname.startsWith('/dashboard/admin') && role !== 'super_admin') {
     //   return NextResponse.redirect(new URL('/dashboard', req.url));
