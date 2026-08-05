@@ -21,26 +21,29 @@ const createIncidentSchema = z.object({
 export async function createIncident(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) {
-    throw new Error("Unauthorized");
+    throw new Error('Unauthorized');
   }
 
-  const validated = createIncidentSchema.parse({
-    studentId: formData.get('studentId'),
+  const validated = incidentSchema.parse({
     title: formData.get('title'),
     description: formData.get('description'),
     category: formData.get('category'),
     severity: formData.get('severity'),
+    studentId: formData.get('studentId'),
+    status: 'open',
   });
 
   const [incident] = await db.insert(incidents).values({
     ...validated,
     reportedById: session.user.id,
-    status: 'open',
   }).returning();
 
   await logAction('CREATE_INCIDENT', `incident:${incident.id}`);
+  
   revalidatePath('/dashboard');
-  return incident;
+  
+  // Fix: Do not return the incident object. Return void implicitly or explicitly.
+  // return incident; // <--- Remove this line if it exists
 }
 
 export async function getDashboardData() {
