@@ -11,7 +11,7 @@ export async function GET() {
     name: 'Super Admin',
     email: 'admin@school.edu',
     passwordHash: hashedPassword,
-    role: 'SUPER_ADMIN',
+    role: 'super_admin',
   }).onConflictDoNothing();
 
   return NextResponse.json({ message: 'Admin seeded' });
