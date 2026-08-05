@@ -1,4 +1,29 @@
-export { auth as middleware } from '@/lib/auth';
+import { auth } from '@/lib/auth';
+import { NextResponse } from 'next/server';
+
+export default auth((req) => {
+  const isLoggedIn = !!req.auth;
+  const isOnDashboard = req.nextUrl.pathname.startsWith('/dashboard');
+  const isOnLogin = req.nextUrl.pathname.startsWith('/login');
+
+  // Redirect logic
+  if (isOnDashboard && !isLoggedIn) {
+    return NextResponse.redirect(new URL('/login', req.url));
+  }
+  
+  if (isOnLogin && isLoggedIn) {
+    return NextResponse.redirect(new URL('/dashboard', req.url));
+  }
+
+  // RBAC Logic (Example: Only Admins can access /admin)
+  if (req.nextUrl.pathname.startsWith('/admin')) {
+    if (!isLoggedIn || req.auth?.user?.role !== 'SUPER_ADMIN') {
+      return NextResponse.redirect(new URL('/dashboard', req.url));
+    }
+  }
+
+  return NextResponse.next();
+});
 
 export const config = {
   matcher: ['/((?!api|_next/static|_next/image|favicon.ico).*)'],
