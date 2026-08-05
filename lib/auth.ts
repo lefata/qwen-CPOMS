@@ -1,31 +1,34 @@
+// lib/auth.ts
 import NextAuth from "next-auth";
 import Credentials from "next-auth/providers/credentials";
-import { db } from "@/lib/db";
-import { users } from "@/lib/db/schema";
+import { z } from "zod";
+import { db } from "./db";
+import { users } from "./db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
-import { z } from "zod";
 
-const loginSchema = z.object({
-  email: z.string().email(),
-  password: z.string().min(6),
-});
-
-export const { handlers, auth, signIn, signOut } = NextAuth({
+export const { handlers, signIn, signOut, auth } = NextAuth({
+  // Force Node.js runtime for compatibility with bcrypt and DB drivers
+  runtime: "nodejs", 
   providers: [
     Credentials({
       async authorize(credentials) {
-        const validatedFields = loginSchema.safeParse(credentials);
-        if (!validatedFields.success) return null;
+        const parsed = z.object({
+          email: z.string().email(),
+          password: z.string().min(6),
+        }).safeParse(credentials);
 
-        const { email, password } = validatedFields.data;
+        if (!parsed.success) return null;
 
-        const userRows = await db.select().from(users).where(eq(users.email, email));
-        const user = userRows[0];
+        const { email, password } = parsed.data;
 
-        if (!user || !user.passwordHash) return null;
+        const foundUsers = await db.select().from(users).where(eq(users.email, email)).limit(1);
+        const user = foundUsers[0];
+
+        if (!user) return null;
 
         const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
+
         if (!passwordsMatch) return null;
 
         return {
@@ -40,15 +43,15 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
-        token.role = (user as any).role;
+        token.role = user.role;
         token.id = user.id;
       }
       return token;
     },
     async session({ session, token }) {
       if (session.user) {
-        (session.user as any).role = token.role;
-        (session.user as any).id = token.id;
+        session.user.id = token.id as string;
+        session.user.role = token.role as string;
       }
       return session;
     },
@@ -56,5 +59,7 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
   pages: {
     signIn: "/login",
   },
-  secret: process.env.NEXTAUTH_SECRET,
+  session: {
+    strategy: "jwt",
+  },
 });
