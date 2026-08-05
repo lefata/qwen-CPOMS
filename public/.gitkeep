@@ -1,0 +1,5 @@
+mkdir -p public
+touch public/.gitkeep
+git add public/.gitkeep
+git commit -m "Ensure public directory exists"
+git push
