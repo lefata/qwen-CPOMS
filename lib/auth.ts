@@ -8,8 +8,7 @@ import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
 
 export const { handlers, signIn, signOut, auth } = NextAuth({
-  // Force Node.js runtime for compatibility with bcrypt and DB drivers
-  runtime: "nodejs", 
+  // Removed 'runtime: "nodejs"' - Next.js handles this automatically for API routes
   providers: [
     Credentials({
       async authorize(credentials) {
