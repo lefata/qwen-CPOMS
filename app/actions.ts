@@ -6,6 +6,7 @@ import { incidents, students, auditLogs, users } from '@/lib/db/schema';
 import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
+import { eq, desc } from 'drizzle-orm'; // Ensure this exists
 import { headers } from 'next/headers';
 
 // Schema for creating an incident
