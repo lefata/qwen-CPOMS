@@ -1,28 +1,32 @@
-import NextAuth, { NextAuthOptions } from "next-auth";
-import CredentialsProvider from "next-auth/providers/credentials";
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
 import { db } from "@/lib/db";
 import { users } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 import bcrypt from "bcryptjs";
+import { z } from "zod";
 
-export const authOptions: NextAuthOptions = {
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
-    CredentialsProvider({
-      name: "Credentials",
-      credentials: {
-        email: { label: "Email", type: "email" },
-        password: { label: "Password", type: "password" }
-      },
+    Credentials({
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
+        const validatedFields = loginSchema.safeParse(credentials);
+        if (!validatedFields.success) return null;
 
-        const foundUsers = await db.select().from(users).where(eq(users.email, credentials.email));
-        const user = foundUsers[0];
+        const { email, password } = validatedFields.data;
 
-        if (!user) return null;
+        const userRows = await db.select().from(users).where(eq(users.email, email));
+        const user = userRows[0];
 
-        const isValid = await bcrypt.compare(credentials.password, user.passwordHash);
-        if (!isValid) return null;
+        if (!user || !user.passwordHash) return null;
+
+        const passwordsMatch = await bcrypt.compare(password, user.passwordHash);
+        if (!passwordsMatch) return null;
 
         return {
           id: user.id,
@@ -30,10 +34,9 @@ export const authOptions: NextAuthOptions = {
           email: user.email,
           role: user.role,
         };
-      }
-    })
+      },
+    }),
   ],
-  session: { strategy: "jwt" },
   callbacks: {
     async jwt({ token, user }) {
       if (user) {
@@ -48,11 +51,10 @@ export const authOptions: NextAuthOptions = {
         (session.user as any).id = token.id;
       }
       return session;
-    }
+    },
   },
   pages: {
-    signIn: '/login',
-  }
-};
-
-export const { auth, handlers } = NextAuth(authOptions);
+    signIn: "/login",
+  },
+  secret: process.env.NEXTAUTH_SECRET,
+});
