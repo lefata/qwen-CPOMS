@@ -1,11 +1,11 @@
-// middleware.ts
 import { NextResponse } from "next/server";
 
 export function middleware(req: Request) {
   const url = new URL(req.url);
   const cookie = req.headers.get("cookie");
   
-  // Check for the session token cookie set by NextAuth
+  // Check for the session token cookie set by NextAuth v5
+  // Default cookie name is 'authjs.session-token'
   const hasSessionToken = cookie?.includes("authjs.session-token=");
   
   const isOnDashboard = url.pathname.startsWith("/dashboard");
@@ -17,6 +17,7 @@ export function middleware(req: Request) {
   }
 
   // Redirect logged-out users to login page
+  // Allow access to public routes like /, /api, etc.
   if (!hasSessionToken && !isOnLogin && !url.pathname.startsWith("/api")) {
     return NextResponse.redirect(new URL("/login", req.url));
   }
