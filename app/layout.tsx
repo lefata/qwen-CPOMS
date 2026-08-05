@@ -5,8 +5,8 @@ import "./globals.css";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: "CPOMS Platform | Safeguarding & Incident Management",
-  description: "Secure school safeguarding platform",
+  title: "CPOMS Platform",
+  description: "Safeguarding and Incident Management",
 };
 
 export default function RootLayout({
@@ -16,9 +16,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${inter.className} bg-slate-50 text-slate-900`}>
-        {children}
-      </body>
+      <body className={inter.className}>{children}</body>
     </html>
   );
 }
