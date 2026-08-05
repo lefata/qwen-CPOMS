@@ -20,6 +20,8 @@ export default async function DashboardPage() {
 
   return (
     <div className="p-8 max-w-7xl mx-auto space-y-8">
+      <h1>Dashboard</h1>
+      <p>Welcome, {session.user?.name}</p>
       <header className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">Safeguarding Dashboard</h1>
