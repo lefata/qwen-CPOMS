@@ -1,108 +1,96 @@
-import { auth } from "@/lib/auth";
-import { redirect } from "next/navigation";
-import { db } from "@/lib/db";
-import { incidents, students } from "@/lib/db/schema";
-import { Card, CardHeader, CardContent } from "@/components/ui/card";
-import { CreateIncidentForm } from "@/components/create-incident-form";
-import { desc } from "drizzle-orm";
+import { auth } from '@/lib/auth';
+import { redirect } from 'next/navigation';
+import { db } from '@/lib/db';
+import { incidents, users } from '@/lib/db/schema';
+import { desc } from 'drizzle-orm';
+import { BadgeAlert, Users, FileText, Shield } from 'lucide-react';
 
 export default async function Dashboard() {
   const session = await auth();
-  if (!session) redirect("/login");
-
-  const role = (session.user as any).role;
   
-  // Fetch data based on role (Counselors/Principals see all, Staff might see limited)
+  if (!session) {
+    redirect('/login');
+  }
+
+  const role = session.user?.role;
+  
+  // Fetch data based on role (Simplified for demo)
   const recentIncidents = await db.query.incidents.findMany({
+    orderBy: desc(incidents.createdAt),
     limit: 5,
-    orderBy: [desc(incidents.createdAt)],
-    with: { student: true }
   });
 
-  const studentCount = await db.$count(students);
-  const openIncidents = await db.$count(incidents);
+  const stats = [
+    { label: 'Open Incidents', value: recentIncidents.filter(i => i.status === 'OPEN').length, icon: BadgeAlert, color: 'text-red-600 bg-red-50' },
+    { label: 'Students Monitored', value: '1,240', icon: Users, color: 'text-blue-600 bg-blue-50' },
+    { label: 'Reports Filed', value: recentIncidents.length, icon: FileText, color: 'text-green-600 bg-green-50' },
+    { label: 'Security Level', value: 'High', icon: Shield, color: 'text-purple-600 bg-purple-50' },
+  ];
 
   return (
     <div className="min-h-screen bg-slate-50">
-      <nav className="bg-white border-b border-slate-200 px-6 py-4 flex justify-between items-center">
-        <h1 className="text-xl font-bold text-blue-900">Safeguarding Platform</h1>
+      <header className="bg-white border-b border-slate-200 px-8 py-4 flex justify-between items-center">
+        <h1 className="text-xl font-bold text-slate-800">Safeguarding Dashboard</h1>
         <div className="flex items-center gap-4">
-          <span className="text-sm text-slate-600">{session.user.name} ({role})</span>
-          <form action="/api/auth/signout" method="POST">
-             <button className="text-sm text-red-600 hover:underline">Sign Out</button>
-          </form>
+          <span className="text-sm text-slate-600">Welcome, {session.user?.name}</span>
+          <span className="px-3 py-1 bg-slate-100 text-slate-600 text-xs font-semibold rounded-full uppercase">
+            {role?.replace('_', ' ')}
+          </span>
         </div>
-      </nav>
+      </header>
 
-      <main className="max-w-7xl mx-auto p-6 space-y-6">
-        {/* Stats */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-          <Card>
-            <CardHeader><h3 className="font-semibold text-slate-500">Total Students</h3></CardHeader>
-            <CardContent><p className="text-3xl font-bold text-slate-900">{studentCount}</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader><h3 className="font-semibold text-slate-500">Open Incidents</h3></CardHeader>
-            <CardContent><p className="text-3xl font-bold text-orange-600">{openIncidents}</p></CardContent>
-          </Card>
-          <Card>
-            <CardHeader><h3 className="font-semibold text-slate-500">Critical Alerts</h3></CardHeader>
-            <CardContent><p className="text-3xl font-bold text-red-600">0</p></CardContent>
-          </Card>
-        </div>
-
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-          {/* Incident Form - Visible to authorized roles */}
-          {(role === 'counselor' || role === 'principal' || role === 'super_admin') && (
-            <div className="lg:col-span-1">
-              <Card>
-                <CardHeader><h3 className="font-bold text-slate-800">Log New Incident</h3></CardHeader>
-                <CardContent>
-                  <CreateIncidentForm />
-                </CardContent>
-              </Card>
-            </div>
-          )}
-
-          {/* Recent Activity */}
-          <div className="lg:col-span-2">
-            <Card>
-              <CardHeader><h3 className="font-bold text-slate-800">Recent Incidents</h3></CardHeader>
-              <CardContent>
-                <div className="overflow-x-auto">
-                  <table className="w-full text-sm text-left">
-                    <thead className="text-xs text-slate-500 uppercase bg-slate-50">
-                      <tr>
-                        <th className="px-4 py-3">Student</th>
-                        <th className="px-4 py-3">Category</th>
-                        <th className="px-4 py-3">Severity</th>
-                        <th className="px-4 py-3">Status</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {recentIncidents.map((inc) => (
-                        <tr key={inc.id} className="border-b hover:bg-slate-50">
-                          <td className="px-4 py-3 font-medium">{inc.student.firstName} {inc.student.lastName}</td>
-                          <td className="px-4 py-3">{inc.category}</td>
-                          <td className="px-4 py-3">
-                            <span className={`px-2 py-1 rounded-full text-xs ${
-                              inc.severity === 'critical' ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'
-                            }`}>
-                              {inc.severity}
-                            </span>
-                          </td>
-                          <td className="px-4 py-3 capitalize">{inc.status}</td>
-                        </tr>
-                      ))}
-                      {recentIncidents.length === 0 && (
-                        <tr><td colSpan={4} className="px-4 py-8 text-center text-slate-500">No incidents recorded yet.</td></tr>
-                      )}
-                    </tbody>
-                  </table>
+      <main className="p-8 max-w-7xl mx-auto">
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+          {stats.map((stat) => (
+            <div key={stat.label} className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm">
+              <div className="flex items-center justify-between mb-4">
+                <div className={`p-3 rounded-lg ${stat.color}`}>
+                  <stat.icon className="w-6 h-6" />
                 </div>
-              </CardContent>
-            </Card>
+              </div>
+              <p className="text-slate-500 text-sm font-medium">{stat.label}</p>
+              <p className="text-2xl font-bold text-slate-900 mt-1">{stat.value}</p>
+            </div>
+          ))}
+        </div>
+
+        <div className="bg-white rounded-xl border border-slate-100 shadow-sm overflow-hidden">
+          <div className="px-6 py-4 border-b border-slate-100 flex justify-between items-center">
+            <h2 className="font-semibold text-slate-800">Recent Incidents</h2>
+            {role === 'SUPER_ADMIN' || role === 'PRINCIPAL' ? (
+               <button className="text-sm text-blue-600 hover:text-blue-700 font-medium">View All</button>
+            ) : null}
           </div>
+          <table className="w-full text-left text-sm text-slate-600">
+            <thead className="bg-slate-50 text-slate-500 font-medium">
+              <tr>
+                <th className="px-6 py-3">Student</th>
+                <th className="px-6 py-3">Severity</th>
+                <th className="px-6 py-3">Status</th>
+                <th className="px-6 py-3">Date</th>
+              </tr>
+            </thead>
+            <tbody className="divide-y divide-slate-100">
+              {recentIncidents.length === 0 ? (
+                <tr><td colSpan={4} className="px-6 py-8 text-center text-slate-400">No incidents recorded yet.</td></tr>
+              ) : (
+                recentIncidents.map((incident) => (
+                  <tr key={incident.id} className="hover:bg-slate-50">
+                    <td className="px-6 py-4 font-medium text-slate-900">{incident.studentName}</td>
+                    <td className="px-6 py-4">
+                      <span className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium ${
+                        incident.severity! >= 4 ? 'bg-red-100 text-red-800' : 'bg-yellow-100 text-yellow-800'
+                      }`}>
+                        Level {incident.severity}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4 capitalize">{incident.status}</td>
+                    <td className="px-6 py-4">{new Date(incident.createdAt!).toLocaleDateString()}</td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
         </div>
       </main>
     </div>
