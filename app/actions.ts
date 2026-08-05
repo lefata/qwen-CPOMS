@@ -7,7 +7,6 @@ import { auth } from '@/lib/auth';
 import { z } from 'zod';
 import { revalidatePath } from 'next/cache';
 import { headers } from 'next/headers';
-import { students } from '@/lib/db/schema'; // Ensure students is imported
 
 // Schema for creating an incident
 const createIncidentSchema = z.object({
