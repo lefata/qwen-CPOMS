@@ -1,6 +1,8 @@
-// middleware.ts
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+
+// Force Node.js runtime to support bcrypt and DB imports
+export const runtime = 'nodejs'; 
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
@@ -17,15 +19,10 @@ export default auth((req) => {
     return NextResponse.redirect(new URL("/login", req.url));
   }
 
-  // Role Based Access Control (Optional refinement)
+  // Role Based Access Control
   if (isLoggedIn && isOnDashboard) {
-    // Fix: Add null check for req.auth
     const role = req.auth?.user?.role;
-    
-    // Example: Prevent 'staff' from accessing specific admin routes if needed
-    // if (req.nextUrl.pathname.startsWith('/dashboard/admin') && role !== 'super_admin') {
-    //   return NextResponse.redirect(new URL('/dashboard', req.url));
-    // }
+    // Add specific role checks here if needed
   }
 
   return NextResponse.next();
