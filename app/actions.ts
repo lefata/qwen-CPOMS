@@ -18,6 +18,15 @@ const createIncidentSchema = z.object({
   severity: z.enum(['low', 'medium', 'high', 'critical']),
 });
 
+// Define the validation schema
+const incidentSchema = z.object({
+  studentId: z.string().uuid(),
+  title: z.string().min(1, "Title is required"),
+  description: z.string().min(1, "Description is required"),
+  category: z.string().min(1, "Category is required"),
+  severity: z.enum(['low', 'medium', 'high', 'critical']).default('medium'),
+});
+
 export async function createIncident(formData: FormData) {
   const session = await auth();
   if (!session?.user?.id) {
