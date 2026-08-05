@@ -2,6 +2,7 @@
 import { NextResponse } from 'next/server';
 import { db } from '@/lib/db';
 import { users } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm'; // Add this import
 import bcrypt from 'bcryptjs';
 
 // Force dynamic rendering to prevent static generation at build time
