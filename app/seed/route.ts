@@ -6,7 +6,7 @@ import bcrypt from "bcryptjs";
 export async function GET() {
   const hash = await bcrypt.hash("ChangeMe123!", 10);
   await db.insert(users).values({
-    name: "Super Admin",
+    name: "super_admin",
     email: "admin@school.edu",
     passwordHash: hash,
     role: "super_admin",
