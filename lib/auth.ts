@@ -1,23 +1,31 @@
-import NextAuth from 'next-auth';
-import Credentials from 'next-auth/providers/credentials';
-import { compare } from 'bcryptjs';
-import { db } from './db';
-import { users } from './db/schema';
-import { eq } from 'drizzle-orm';
+import NextAuth from "next-auth";
+import Credentials from "next-auth/providers/credentials";
+import { db } from "./db";
+import { users } from "./db/schema";
+import { eq } from "drizzle-orm";
+import bcrypt from "bcryptjs";
+import { z } from "zod";
 
-export const { handlers, signIn, signOut, auth } = NextAuth({
+const loginSchema = z.object({
+  email: z.string().email(),
+  password: z.string().min(6),
+});
+
+export const { handlers, auth, signIn, signOut } = NextAuth({
   providers: [
     Credentials({
       async authorize(credentials) {
-        if (!credentials?.email || !credentials?.password) return null;
-        
-        const user = await db.query.users.findFirst({
-          where: eq(users.email, credentials.email as string),
-        });
+        const parsed = loginSchema.safeParse(credentials);
+        if (!parsed.success) return null;
+
+        const { email, password } = parsed.data;
+
+        const foundUsers = await db.select().from(users).where(eq(users.email, email));
+        const user = foundUsers[0];
 
         if (!user) return null;
 
-        const isValid = await compare(credentials.password as string, user.passwordHash);
+        const isValid = await bcrypt.compare(password, user.passwordHash);
         if (!isValid) return null;
 
         return {
@@ -47,8 +55,5 @@ export const { handlers, signIn, signOut, auth } = NextAuth({
   },
   pages: {
     signIn: '/login',
-  },
-  session: {
-    strategy: 'jwt',
   },
 });
