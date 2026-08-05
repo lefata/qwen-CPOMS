@@ -1,8 +1,9 @@
-// FORCE NODE.JS RUNTIME - This must be the first export
-export const runtime = 'nodejs';
-
 import { auth } from "@/lib/auth";
 import { NextResponse } from "next/server";
+
+// FORCE NODEJS RUNTIME: This prevents the "unsupported modules" error
+// because bcryptjs and the DB driver cannot run on the Edge.
+export const runtime = 'nodejs'; 
 
 export default auth((req) => {
   const isLoggedIn = !!req.auth;
@@ -17,12 +18,6 @@ export default auth((req) => {
   // Redirect logged-out users to login page
   if (!isLoggedIn && !isOnLogin && !req.nextUrl.pathname.startsWith("/api")) {
     return NextResponse.redirect(new URL("/login", req.url));
-  }
-
-  // Role Based Access Control
-  if (isLoggedIn && isOnDashboard) {
-    const role = req.auth?.user?.role;
-    // Add specific role checks here if needed
   }
 
   return NextResponse.next();
