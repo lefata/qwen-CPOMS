@@ -25,7 +25,7 @@ export default function LoginForm() {
       });
 
       if (result?.error) {
-        setError("Invalid email or password");
+        setError("Invalid credentials");
       } else {
         router.push("/dashboard");
         router.refresh();
