@@ -1,38 +1,44 @@
+// middleware.ts
 import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
-export function middleware(request: NextRequest) {
-  const pathname = request.nextUrl.pathname;
+// Force Node.js runtime to avoid Edge limitations and crashes
+export const runtime = 'nodejs';
 
-  // 1. Ignore static files and API routes (except auth)
+export function middleware(request: NextRequest) {
+  const { pathname } = request.nextUrl;
+
+  // 1. Skip static files and API routes to prevent loops
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
-    pathname.startsWith("/api") 
+    pathname.startsWith("/api") ||
+    pathname === "/favicon.ico"
   ) {
     return NextResponse.next();
   }
 
-  // 2. Check for session token safely
-  const sessionToken = request.cookies.get("authjs.session-token")?.value;
-  const isLoggedIn = !!sessionToken;
+  // 2. Check for the NextAuth session cookie
+  // NextAuth v5 uses 'authjs.session-token' by default
+  const sessionCookie = request.cookies.get("authjs.session-token");
+  const isLoggedIn = !!sessionCookie;
+
+  const isOnDashboard = pathname.startsWith("/dashboard");
+  const isOnLogin = pathname.startsWith("/login");
 
   // 3. Redirect Logic
-  const isLoginPath = pathname === "/login";
-  const isDashboardPath = pathname.startsWith("/dashboard");
-
-  // If logged in and trying to access login page -> go to dashboard
-  if (isLoggedIn && isLoginPath) {
+  
+  // If logged in and trying to visit login page -> go to dashboard
+  if (isLoggedIn && isOnLogin) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // If NOT logged in and trying to access protected route -> go to login
-  // We consider root "/" and "/dashboard" as protected. 
-  // Adjust this list if you have public landing pages.
-  if (!isLoggedIn && !isLoginPath) {
+  // If NOT logged in and trying to visit dashboard -> go to login
+  if (!isLoggedIn && isOnDashboard) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
+  // Allow all other requests
   return NextResponse.next();
 }
 
