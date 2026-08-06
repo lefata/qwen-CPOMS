@@ -1,24 +1,33 @@
 // middleware.ts
 import { NextResponse } from "next/server";
 
-export function middleware(req: Request) {
-  const url = new URL(req.url);
-  const cookie = req.headers.get("cookie") || "";
-  
-  // Check for the NextAuth session token cookie
-  const hasSessionToken = cookie.includes("authjs.session-token=");
-  
-  const isOnDashboard = url.pathname.startsWith("/dashboard");
-  const isOnLogin = url.pathname.startsWith("/login");
+export function middleware(request: Request) {
+  const { pathname } = request.nextUrl;
 
-  // Redirect logged-in users away from login page
-  if (isOnLogin && hasSessionToken) {
-    return NextResponse.redirect(new URL("/dashboard", req.url));
+  // Skip static files and api routes (except auth api)
+  if (
+    pathname.startsWith("/_next") ||
+    pathname.startsWith("/api/auth") ||
+    pathname.includes(".")
+  ) {
+    return NextResponse.next();
   }
 
-  // Redirect logged-out users to login page (except API routes and static files)
-  if (!hasSessionToken && !isOnLogin && !url.pathname.startsWith("/api")) {
-    return NextResponse.redirect(new URL("/login", req.url));
+  // Get the session cookie set by NextAuth v5 (default name is 'authjs.session-token')
+  const sessionCookie = request.cookies.get("authjs.session-token");
+  const isLoggedIn = !!sessionCookie;
+
+  // Redirect logic
+  if (pathname === "/login") {
+    if (isLoggedIn) {
+      return NextResponse.redirect(new URL("/dashboard", request.url));
+    }
+    return NextResponse.next();
+  }
+
+  // Protect dashboard and other private routes
+  if (!isLoggedIn && !pathname.startsWith("/api")) {
+    return NextResponse.redirect(new URL("/login", request.url));
   }
 
   return NextResponse.next();
