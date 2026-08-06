@@ -2,34 +2,31 @@
 # Dependencies
 node_modules/
 
-# Build artifacts
+# Build outputs
+.next/
 dist/
 build/
-*.min.css
-*.min.js
-*.bundle.js
+out/
+output/
 
-# Cache directories
-.cache/
-.node_cache/
-
-# Logs
-*.log
-
-# Environment
+# Environment variables
 .env
 .env.local
 .env.*
 
-# Editors
+# Logs
+*.log
+
+# OS generated files
+.DS_Store
+Thumbs.db
+
+# Editor files
 .vscode/
 .idea/
 *.swp
 *.swo
-
-# OS
-.DS_Store
-Thumbs.db
+*.tmp
 
 # Python
 __pycache__/
@@ -37,15 +34,90 @@ __pycache__/
 *.pyo
 *.pyd
 .Python
-env/
-venv/
-.venv/
-pip-log.txt
-pip-delete-this-directory.txt
-
-# Coverage reports
+*.so
+.coverage
 coverage/
-*.cover
+htmlcov/
+.pytest_cache/
+.mypy_cache/
+
+# Node.js
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids/
+*.pid
+*.seed
+*.pid.lock
+
+# Coverage directory used by tools like istanbul
+coverage/
+
+# nyc test coverage
 .nyc_output/
-istanbul/
+
+# Grunt intermediate storage (https://gruntjs.com/creating-plugins#storing-task-files)
+.grunt/
+
+# Bower dependency directory (https://bower.io/)
+bower_components/
+
+# node-waf configuration
+.lock-wscript
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directories
+node_modules/
+jspm_packages/
+
+# TypeScript v1 declaration files
+typings/
+
+# Optional npm cache directory
+.npm
+
+# Optional eslint cache
+.eslintcache
+
+# Optional REPL history
+.node_repl_history
+
+# Output of 'npm pack'
+*.tgz
+
+# Yarn Integrity file
+.yarn-integrity
+
+# dotenv environment variables file
+.env.test
+
+# next.js build output
+.next/
+out/
+
+# production build folder
+dist/
+
+# local env files
+.env.local
+.env.development.local
+.env.test.local
+.env.production.local
+
+# vercel
+.vercel/
+
+# netlify
+.netlify/
+
+# temporary files used by vite
+!.gitignore
+vite.config.js.timestamp-*.mjs
+
+# svelte kit stuff
+.svelte-kit/
 ```
