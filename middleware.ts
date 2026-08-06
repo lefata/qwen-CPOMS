@@ -2,30 +2,34 @@ import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export function middleware(request: NextRequest) {
-  const { pathname } = request.nextUrl;
+  const pathname = request.nextUrl.pathname;
 
-  // Skip static files and api routes (except auth api)
+  // 1. Ignore static files and API routes (except auth)
   if (
     pathname.startsWith("/_next") ||
     pathname.startsWith("/static") ||
-    (pathname.startsWith("/api") && !pathname.includes("auth"))
+    pathname.startsWith("/api") 
   ) {
     return NextResponse.next();
   }
 
-  const cookie = request.cookies.get("authjs.session-token");
-  const hasSessionToken = !!cookie;
+  // 2. Check for session token safely
+  const sessionToken = request.cookies.get("authjs.session-token")?.value;
+  const isLoggedIn = !!sessionToken;
 
-  const isOnDashboard = pathname.startsWith("/dashboard");
-  const isOnLogin = pathname.startsWith("/login");
+  // 3. Redirect Logic
+  const isLoginPath = pathname === "/login";
+  const isDashboardPath = pathname.startsWith("/dashboard");
 
-  // Redirect logged-in users away from login page
-  if (isOnLogin && hasSessionToken) {
+  // If logged in and trying to access login page -> go to dashboard
+  if (isLoggedIn && isLoginPath) {
     return NextResponse.redirect(new URL("/dashboard", request.url));
   }
 
-  // Redirect logged-out users to login page
-  if (!hasSessionToken && !isOnLogin) {
+  // If NOT logged in and trying to access protected route -> go to login
+  // We consider root "/" and "/dashboard" as protected. 
+  // Adjust this list if you have public landing pages.
+  if (!isLoggedIn && !isLoginPath) {
     return NextResponse.redirect(new URL("/login", request.url));
   }
 
